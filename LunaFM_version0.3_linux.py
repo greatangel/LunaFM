@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import asyncio
 
 load_dotenv()
-TOKEN = 'MTMzNDczMzQ1NTE0MTEwOTgzMw.Gu6C8Q.CzR4o8i7vEGCtkLuB9ZlEwBCarAhohdHkRUw9Y'
+TOKEN = ''
 
 intents = discord.Intents.default()
 intents.message_content = True
