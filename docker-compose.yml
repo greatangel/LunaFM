@@ -1,0 +1,10 @@
+
+services:
+  app:
+    image: lunafm:latest
+    restart: always
+    build: 
+      dockerfile: ./Dockerfile
+    container_name: lunafm
+    ports:
+      - "8000:8080"
