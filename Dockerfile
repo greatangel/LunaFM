@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
-COPY . .
+COPY ./LunaFM_version0.3_linux.py .
 
 # Install any needed dependencies specified in requirements.txt
 RUN apt-get update && apt-get install -y ffmpeg
