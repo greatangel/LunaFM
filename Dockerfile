@@ -13,4 +13,4 @@ RUN apt-get update && apt-get install -y ffmpeg
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Command to run the application
-CMD ["python", "LunaFM_version0.3.py"]
+CMD ["python", "LunaFM_version0.3_linux.py"]
