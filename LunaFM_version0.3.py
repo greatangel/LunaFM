@@ -4,6 +4,7 @@ import yt_dlp as youtube_dl
 import os
 from dotenv import load_dotenv
 import asyncio
+from youtubesearchpython import VideosSearch
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -64,12 +65,25 @@ async def join(ctx):
         await ctx.send("Debes estar en un canal de voz.")
 
 @bot.command()
-async def play(ctx, url: str):
+async def play(ctx, *, query: str):
     voice_client = ctx.voice_client
 
     if not voice_client:
         await ctx.invoke(join)
         voice_client = ctx.voice_client
+
+    # Determinar si es URL o búsqueda
+    if not query.startswith(('http://', 'https://', 'www.', 'youtube.com', 'youtu.be')):
+        # Buscar en YouTube
+        search = VideosSearch(query, limit=1)
+        result = search.result()
+        if not result['result']:
+            await ctx.send("❌ No se encontraron resultados")
+            return
+            
+        url = result['result'][0]['link']
+    else:
+        url = query
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
