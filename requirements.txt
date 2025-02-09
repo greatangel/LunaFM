@@ -2,3 +2,4 @@ discord.py==2.4.0
 yt-dlp==2025.01.26
 python-dotenv==1.0.0
 PyNaCl
+pip install youtube-search-python
