@@ -28,11 +28,11 @@ ydl_opts = {
 
 queues = {}
 
-DISCONNECT_AFTER = 20  # 300 segundos = 5 minutos (ajusta este valor)
+DISCONNECT_AFTER = 200  # 300 segundos = 5 minutos (ajusta este valor)
 last_activity = {}
 
 # Verificador de inactividad
-@tasks.loop(seconds=5)
+@tasks.loop(seconds=30)
 async def check_inactivity():
     current_time = time.time()
     for guild_id in list(last_activity.keys()):
