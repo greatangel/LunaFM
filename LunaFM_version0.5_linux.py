@@ -1,13 +1,14 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import yt_dlp as youtube_dl
 import os
 from dotenv import load_dotenv
 import asyncio
 from youtubesearchpython import VideosSearch
+import time
 
 load_dotenv()
-TOKEN = ''
+TOKEN = os.getenv('DISCORD_TOKEN')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -22,10 +23,43 @@ ydl_opts = {
         'preferredcodec': 'mp3',
         'preferredquality': '192',
     }],
-    'ffmpeg_location': '/usr/bin/ffmpeg'  # Actualiza esta ruta
+    'ffmpeg_location': 'C:\FFmpeg'  # Actualiza esta ruta
 }
 
 queues = {}
+
+DISCONNECT_AFTER = 20  # 300 segundos = 5 minutos (ajusta este valor)
+last_activity = {}
+
+# Verificador de inactividad
+@tasks.loop(seconds=5)
+async def check_inactivity():
+    current_time = time.time()
+    for guild_id in list(last_activity.keys()):
+        guild = bot.get_guild(guild_id)
+        if not guild:
+            del last_activity[guild_id]
+            continue
+        
+        voice_client = guild.voice_client
+        if not voice_client or not voice_client.is_connected():
+            del last_activity[guild_id]
+            continue
+        
+        # Calcular tiempo inactivo
+        tiempo_inactivo = current_time - last_activity[guild_id]
+        
+        # Verificar condiciones para desconectar
+        if (
+            not voice_client.is_playing() and 
+            not queues.get(guild_id, []) and 
+            tiempo_inactivo >= DISCONNECT_AFTER
+        ):
+            await voice_client.disconnect()
+            if guild_id in queues:
+                del queues[guild_id]
+            del last_activity[guild_id]
+            print(f"Desconectado por inactividad en {guild.name}")
 
 def after_playing(error, guild_id):
     if error:
@@ -52,9 +86,16 @@ def after_playing(error, guild_id):
         coro = next_song['ctx'].send(f"Reproduciendo: {next_song['title']}")
         asyncio.run_coroutine_threadsafe(coro, bot.loop)
 
+         # Actualizar la última actividad al reproducir nueva canción
+        last_activity[guild_id] = time.time()
+    else:
+        # Iniciar temporizador de desconexión
+        last_activity[guild_id] = time.time()
+
 @bot.event
 async def on_ready():
     print(f'Bot conectado como {bot.user}')
+    check_inactivity.start()
 
 @bot.command()
 async def join(ctx):
@@ -195,6 +236,9 @@ async def shuffle(ctx):
     await ctx.send("🔀 Cola mezclada")
 
 #### Añadir los comandos antes del de leave para llevar un mejor orden        
+
+    # Actualizar actividad al añadir canción
+    last_activity[ctx.guild.id] = time.time()
 
 @bot.command()
 async def leave(ctx):
