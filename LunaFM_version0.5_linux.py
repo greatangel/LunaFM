@@ -2,12 +2,10 @@ import discord
 from discord.ext import commands, tasks
 import yt_dlp as youtube_dl
 import os
-from dotenv import load_dotenv
 import asyncio
 from youtubesearchpython import VideosSearch
 import time
 
-load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 intents = discord.Intents.default()
