@@ -105,11 +105,21 @@ async def join(ctx):
 
 @bot.command()
 async def play(ctx, *, query: str):
+    # Verifica que el usuario esté en un canal de voz
+    if ctx.author.voice is None:
+        await ctx.send("❌ Debes estar en un canal de voz para reproducir música.")
+        return
+
+    # Intenta obtener el voice_client actual
     voice_client = ctx.voice_client
 
+    # Si no está conectado, intenta unirte
     if not voice_client:
-        await ctx.invoke(join)
-        voice_client = ctx.voice_client
+        try:
+            voice_client = await ctx.author.voice.channel.connect()
+        except Exception as e:
+            await ctx.send(f"❌ No pude conectarme al canal de voz: {e}")
+            return
 
     # Determinar si es URL o búsqueda
     if not query.startswith(('http://', 'https://', 'www.', 'youtube.com', 'youtu.be')):
@@ -117,13 +127,13 @@ async def play(ctx, *, query: str):
         search = VideosSearch(query, limit=1)
         result = search.result()
         if not result['result']:
-            await ctx.send("❌ No se encontraron resultados")
+            await ctx.send("❌ No se encontraron resultados.")
             return
-            
         url = result['result'][0]['link']
     else:
         url = query
 
+    # Extraer información de la canción
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         url_audio = info['url']
@@ -140,6 +150,7 @@ async def play(ctx, *, query: str):
         queues[guild_id] = []
     queues[guild_id].append(song)
 
+    # Reproducir si no hay música en curso
     if not voice_client.is_playing():
         next_song = queues[guild_id].pop(0)
         ffmpeg_options = {
@@ -148,9 +159,10 @@ async def play(ctx, *, query: str):
         }
         source = discord.FFmpegPCMAudio(next_song['url'], **ffmpeg_options)
         voice_client.play(source, after=lambda e: after_playing(e, guild_id))
-        await ctx.send(f"Reproduciendo: {next_song['title']}")
+        await ctx.send(f"🎶 Reproduciendo: **{next_song['title']}**")
     else:
         await ctx.send(f"🎵 Añadido a la cola: **{title}**")
+
 
 @bot.command()
 async def skip(ctx):
